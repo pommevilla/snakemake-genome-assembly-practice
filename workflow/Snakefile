@@ -53,6 +53,7 @@ rule clean_all:
         rm -rf {params.sra_download_directory}/* 
         """
 
+####### Output rules #######
 rule download_sra:
     output:
         f"{config['sra_download_directory']}/{{sra}}/{{sra}}.sra"
@@ -118,17 +119,3 @@ rule spades_py:
             --isolate \
             -o {config[sra_download_directory]}/{wildcards.sra}/spades_output 
         """
-
-    # rule assembly_metrics:
-    #     input:
-    #     log:
-    #     conda:
-    #         "../envs/metrics.yml"
-    #     shell:
-    #         """
-            
-    #         """
-
-
-####### Modules #######
-# include: "rules/get_data.smk"
