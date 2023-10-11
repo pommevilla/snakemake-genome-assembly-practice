@@ -6,6 +6,11 @@ Practicing using Snakemake to:
 * Assembled genomes with [SPAdes](https://github.com/ablab/spades#sec3.1)
 * Get genome assembly metrics with [CheckM2](https://github.com/chklovski/CheckM2)
 
-To do:
+## Workflow
+
+![](results/snakemake_dag.png)
+
+## To do
 
 - [ ] Docker container 
+- [ ] Assembly metrics (QUAST, checkm2)

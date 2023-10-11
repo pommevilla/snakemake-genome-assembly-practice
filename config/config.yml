@@ -1,0 +1,11 @@
+# Where to download the SRA files 
+sra_download_directory: /90daydata/fsepru/paul.villanueva/sra_scratch
+
+# File containing SRAs to download
+# sra_list: data/sras.txt
+
+# Short SRA list for testing
+sra_list: data/sras_short.txt
+
+# Where to store assembled genomes
+genome_directory: /90daydata/fsepru/paul.villanueva/genomes

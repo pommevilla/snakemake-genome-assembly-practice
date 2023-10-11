@@ -1,0 +1,134 @@
+configfile: "config/config.yml"
+include: "rules/common.smk"
+
+
+####### Target rules #######
+rule all:
+    input:
+        "results/snakemake_dag.png",
+        expand(
+            "{sra_download_directory}/{sra}/{sra}.sra", 
+            sra_download_directory=config['sra_download_directory'], 
+            sra=SRA_LIST
+        ),
+        expand(
+            "{sra_download_directory}/{sra}/{sra}_pass_{x}.fastq.gz",
+            sra_download_directory=config['sra_download_directory'],
+            sra=SRA_LIST,
+            x = [1, 2]
+        ),
+        expand(
+            "{sra_download_directory}/{sra}/{sra}_pass_{x}.fastp.fastq.gz",
+            sra_download_directory=config['sra_download_directory'],
+            sra=SRA_LIST,
+            x = [1, 2]
+        ),
+        expand(
+            "{sra_download_directory}/{sra}/spades_output/scaffolds.fasta",
+            sra_download_directory=config['sra_download_directory'],
+            sra=SRA_LIST
+        )
+
+
+####### Meta rules #######
+rule generate_snakemake_dag:
+    input:
+    output:
+        "results/snakemake_dag.png"
+    log:
+        err="logs/snakemake_dag.err",
+        out="logs/snakemake_dag.out"
+    shell:
+        "snakemake --rulegraph | dot -Tpng > {output}"
+
+rule clean_all:
+    log:
+        err="logs/clean_all.err",
+        out="logs/clean_all.out"
+    params:
+        sra_download_directory=config["sra_download_directory"]
+    shell:
+        """
+        echo "Removing all prefetch and fastq dumps in {params.sra_download_directory}" > {log.out}
+        rm -rf {params.sra_download_directory}/* 
+        """
+
+rule download_sra:
+    output:
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}.sra"
+    log:
+        err="logs/download_sra/{sra}/prefetch.err",
+        out="logs/download_sra/{sra}/prefetch.out"
+    shell:
+        """
+        prefetch {wildcards.sra} -O {config[sra_download_directory]} 1> {log.out} 2> {log.err}
+        """
+
+rule dump_fastqs:
+    input:
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}.sra"
+    output:
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastq.gz",
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.fastq.gz"
+    log:
+        err="logs/dump_fastqs/{sra}/fastq-dump.err",
+        out="logs/dump_fastqs/{sra}/fastq-dump.out"
+    shell:
+        """
+        fastq-dump --outdir {config[sra_download_directory]}/{wildcards.sra} \
+            --gzip --skip-technical --readids --read-filter pass \
+            --split-3 --clip \
+            {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}.sra 
+        """
+    
+rule fastp_qc:
+    input:
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastq.gz",
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.fastq.gz"
+    output:
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastp.fastq.gz",
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.fastp.fastq.gz",
+    log:
+        err="logs/fastp_qc/{sra}/fastp_qc.err",
+        out="logs/fastp_qc/{sra}/fastp_qc.out"
+    shell:
+        """
+        fastp -i {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.fastq.gz \
+            -I {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.fastq.gz \
+            -o {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.fastp.fastq.gz \
+            -O {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.fastp.fastq.gz \
+            --failed_out {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_failed_reads.txt \
+        """
+
+rule spades_py:
+    input:
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastp.fastq.gz",
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.fastp.fastq.gz",
+    output:
+        f"{config['sra_download_directory']}/{{sra}}/spades_output/scaffolds.fasta",
+    log:
+        err="logs/spades_py/{sra}/spades_py.err",
+        out="logs/spades_py/{sra}/spades_py.out"
+    conda:
+        "envs/spades.yml"
+    shell:
+        """
+        spades.py -1 {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.fastp.fastq.gz \
+            -2 {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.fastp.fastq.gz \
+            --isolate \
+            -o {config[sra_download_directory]}/{wildcards.sra}/spades_output 
+        """
+
+    # rule assembly_metrics:
+    #     input:
+    #     log:
+    #     conda:
+    #         "../envs/metrics.yml"
+    #     shell:
+    #         """
+            
+    #         """
+
+
+####### Modules #######
+# include: "rules/get_data.smk"
