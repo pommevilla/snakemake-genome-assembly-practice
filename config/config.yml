@@ -8,4 +8,7 @@ sra_download_directory: /90daydata/fsepru/paul.villanueva/sra_scratch
 sra_list: data/sras_short.txt
 
 # Where to store assembled genomes
-genome_directory: /90daydata/fsepru/paul.villanueva/genomes
+final_genome_directory: /90daydata/fsepru/paul.villanueva/practice_genomes
+
+# Where to store final metrics
+final_metrics_directory: /90daydata/fsepru/paul.villanueva/practice_genomes/metrics
