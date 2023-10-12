@@ -29,4 +29,4 @@ Practicing using Snakemake to:
     - [ ] FASTP
     - [x] SPAdes
     - [x] QUAST
-- [ ] Enable SLRUM support
+- [ ] Enable slurm support
