@@ -13,6 +13,10 @@ Practicing using Snakemake to:
 * Install `snakemake`. A bare conda/mamba environment is recommended (ie., created with `mamba craete -c conda-forge -c bioconda -n snakemake snakemake`)
 * Run the pipeline with `snakemake --use-conda -c`
 
+## Assumptions
+
+* The fastq files dumped from SRA are paired-end (ie, after dumping, they'll be named something like `SRRXXXXX_pass_1.fastq.gz` and `SRRXXXXX_pass_2.fastq.gz`)
+
 ## Workflow
 
 ![](results/snakemake_dag.png)
