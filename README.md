@@ -19,8 +19,10 @@ Practicing using Snakemake to:
 
 ## To do
 
-- [ ] Assembly metrics (QUAST, checkm2)
+- [x] Assembly metrics (QUAST, checkm2)
 - [ ] Enable conda/docker support for:
     - [ ] SRA toolkit
     - [ ] FASTP
     - [x] SPAdes
+    - [x] QUAST
+- [ ] Enable SLRUM support

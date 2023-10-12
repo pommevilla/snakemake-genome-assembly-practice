@@ -7,28 +7,15 @@ rule all:
     input:
         "results/snakemake_dag.png",
         expand(
-            "{sra_download_directory}/{sra}/{sra}.sra", 
-            sra_download_directory=config['sra_download_directory'], 
+            "{final_genome_directory}/{sra}_scaffolds.fasta",
+            final_genome_directory=config['final_genome_directory'],
             sra=SRA_LIST
         ),
         expand(
-            "{sra_download_directory}/{sra}/{sra}_pass_{x}.fastq.gz",
-            sra_download_directory=config['sra_download_directory'],
-            sra=SRA_LIST,
-            x = [1, 2]
-        ),
-        expand(
-            "{sra_download_directory}/{sra}/{sra}_pass_{x}.fastp.fastq.gz",
-            sra_download_directory=config['sra_download_directory'],
-            sra=SRA_LIST,
-            x = [1, 2]
-        ),
-        expand(
-            "{sra_download_directory}/{sra}/spades_output/scaffolds.fasta",
-            sra_download_directory=config['sra_download_directory'],
+            "{final_metrics_directory}/{sra}_report.txt",
+            final_metrics_directory=config['final_metrics_directory'],
             sra=SRA_LIST
         )
-
 
 ####### Meta rules #######
 rule generate_snakemake_dag:
@@ -54,6 +41,7 @@ rule clean_all:
         """
 
 ####### Output rules #######
+# Prefetches SRA files
 rule download_sra:
     output:
         f"{config['sra_download_directory']}/{{sra}}/{{sra}}.sra"
@@ -65,6 +53,7 @@ rule download_sra:
         prefetch {wildcards.sra} -O {config[sra_download_directory]} 1> {log.out} 2> {log.err}
         """
 
+# Dumps fastqs from prefetched SRA files
 rule dump_fastqs:
     input:
         f"{config['sra_download_directory']}/{{sra}}/{{sra}}.sra"
@@ -82,6 +71,7 @@ rule dump_fastqs:
             {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}.sra 
         """
     
+# QC on fastqs using fastp
 rule fastp_qc:
     input:
         f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastq.gz",
@@ -101,6 +91,7 @@ rule fastp_qc:
             --failed_out {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_failed_reads.txt \
         """
 
+# Assembles genomes using spades
 rule spades_py:
     input:
         f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastp.fastq.gz",
@@ -118,4 +109,50 @@ rule spades_py:
             -2 {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.fastp.fastq.gz \
             --isolate \
             -o {config[sra_download_directory]}/{wildcards.sra}/spades_output 
+        """
+
+# Quality metrics on assembled genomes
+rule quast:
+    input:
+        f"{config['sra_download_directory']}/{{sra}}/spades_output/scaffolds.fasta",
+    output:
+        f"{config['sra_download_directory']}/{{sra}}/quast_output/report.txt",
+    log:
+        err="logs/{sra}/quast.err",
+        out="logs/{sra}/quast.out"
+    conda:
+        "envs/metrics.yml"
+    shell:
+        """
+        quast.py {input} -o \
+            {config[sra_download_directory]}/{wildcards.sra}/quast_output 1> {log.out} 2> {log.err}
+        """
+    
+####### Moving files to final directories #######
+# Collect metric files into one directory
+rule collect_metrics:
+    input:
+        f"{config['sra_download_directory']}/{{sra}}/quast_output/report.txt",
+    output:
+        f"{config['final_metrics_directory']}/{{sra}}_report.txt",
+    log:
+        err="logs/{sra}/collect_metrics.err",
+        out="logs/{sra}/collect_metrics.out"
+    shell:
+        """
+        cp {input} {config[final_metrics_directory]}/{wildcards.sra}_report.txt 1> {log.out} 2> {log.err}
+        """
+
+# Move genomes to final directory
+rule collect_genomes:
+    input:
+        f"{config['sra_download_directory']}/{{sra}}/spades_output/scaffolds.fasta",
+    output:
+        f"{config['final_genome_directory']}/{{sra}}_scaffolds.fasta",
+    log:
+        err="logs/{sra}/collect_genomes.err",
+        out="logs/{sra}/collect_genomes.out"
+    shell:
+        """
+        cp {input} {config[final_genome_directory]}/{wildcards.sra}_scaffolds.fasta 1> {log.out} 2> {log.err}
         """
