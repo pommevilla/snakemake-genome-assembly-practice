@@ -30,3 +30,5 @@ Practicing using Snakemake to:
     - [x] SPAdes
     - [x] QUAST
 - [ ] Enable slurm support
+- [x] Change fastp report outputs
+    - [x] See https://github.com/OpenGene/fastp#simple-usage
