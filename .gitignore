@@ -45,11 +45,10 @@ Rplots.pdf
 # Snakemake files
 .snakemake
 logs/
+benchmarks
 
 # Snakemake status outputs
-.sras_fetched
-.fastqs_dumped
-.kmers_counted
+output/*
 
 # Scratch directory for practice
 scratch
