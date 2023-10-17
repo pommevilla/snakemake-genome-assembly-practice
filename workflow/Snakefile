@@ -42,8 +42,12 @@ rule clean_all:
         sra_download_directory=config["sra_download_directory"]
     shell:
         """
-        echo "Removing all prefetch and fastq dumps in {params.sra_download_directory}" > {log.out}
-        rm -rf {params.sra_download_directory}/* 
+        echo "Removing all logs..."
+        rm -rf logs/*
+        rm -rf .snakemake/log
+
+        echo "Removing locks..."
+        rm .snakemake/locks/*
         """
 
 ####### Output rules #######
@@ -121,6 +125,8 @@ rule spades_py:
     resources:
         time="24h",
         mem_mb="64G"
+    benchmark:
+        "benchmarks/spades_py/{sra}.txt"
     shell:
         """
         spades.py --threads {threads} \
