@@ -54,6 +54,8 @@ rule download_sra:
     log:
         err="logs/download_sra/{sra}/prefetch.err",
         out="logs/download_sra/{sra}/prefetch.out"
+    conda:
+        "envs/sra-tools.yml"
     shell:
         """
         prefetch {wildcards.sra} -O {config[sra_download_directory]} 1> {log.out} 2> {log.err}
@@ -69,6 +71,8 @@ rule dump_fastqs:
     log:
         err="logs/dump_fastqs/{sra}/fastq-dump.err",
         out="logs/dump_fastqs/{sra}/fastq-dump.out"
+    conda:
+        "envs/sra-tools.yml"
     shell:
         """
         fastq-dump --outdir {config[sra_download_directory]}/{wildcards.sra} \
@@ -88,6 +92,8 @@ rule fastp_qc:
     log:
         err="logs/fastp_qc/{sra}/fastp_qc.err",
         out="logs/fastp_qc/{sra}/fastp_qc.out"
+    conda:
+        "envs/fastp.yml"
     shell:
         """
         fastp -i {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.fastq.gz \
