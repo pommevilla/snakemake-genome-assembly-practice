@@ -109,11 +109,39 @@ rule fastp_qc:
             -j {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_fastp_report.json \
         """
 
-# Submit a job to slurm to run spades to assemble genome
-rule spades_py:
+
+# Remove phiX spikein
+rule phix_removal:
     input:
         f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastp.fastq.gz",
         f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.fastp.fastq.gz",
+    output:
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.unmatched.fastp.fastq.gz",
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.unmatched.fastp.fastq.gz",
+    log:
+        err="logs/phix_removal/{sra}/phix_removal.err",
+        out="logs/phix_removal/{sra}/phix_removal.out"
+    conda:
+        "envs/bbduk.yml"
+    resources:
+        time="1h",
+        partition="short",
+    shell:
+        """
+        bbduk.sh in={config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.fastp.fastq.gz \
+            in2={config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.fastp.fastq.gz \
+            out={config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.unmatched.fastp.fastq.gz \
+            out2={config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.unmatched.fastp.fastq.gz \
+            stats={config[sra_download_directory]}/{wildcards.sra}/bbduk_stats.txt \
+            hdist=1
+        """
+
+
+# Submit a job to slurm to run spades to assemble genome
+rule spades_py:
+    input:
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.unmatched.fastp.fastq.gz",
+        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.unmatched.fastp.fastq.gz",
     output:
         f"{config['sra_download_directory']}/{{sra}}/spades_output/scaffolds.fasta",
     log:
@@ -130,8 +158,8 @@ rule spades_py:
     shell:
         """
         spades.py --threads {threads} \
-            -1 {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.fastp.fastq.gz \
-            -2 {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.fastp.fastq.gz \
+            -1 {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.unmatched.fastp.fastq.gz \
+            -2 {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.unmatched.fastp.fastq.gz \
             -o {config[sra_download_directory]}/{wildcards.sra}/spades_output 
         """
 
