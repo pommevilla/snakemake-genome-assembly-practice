@@ -13,7 +13,7 @@ cluster:
     --mail-user=paul.villanueva@usda.gov
     --nodes=1
 default-resources:
-  - partition=medium
+  - partition=short
   - mem_mb=16000
 restart-times: 1
 max-jobs-per-second: 10

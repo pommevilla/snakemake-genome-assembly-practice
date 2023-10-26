@@ -151,7 +151,7 @@ rule spades_py:
         "envs/spades.yml"
     threads: 32
     resources:
-        time="24h",
+        time="12h",
         mem_mb="64G"
     benchmark:
         "benchmarks/spades_py/{sra}.txt"
