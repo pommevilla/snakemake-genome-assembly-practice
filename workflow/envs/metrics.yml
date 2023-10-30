@@ -1,4 +1,4 @@
-name: spades
+name: quast
 channels:
   - bioconda
 dependencies:

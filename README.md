@@ -28,6 +28,7 @@ Practicing using Snakemake to:
 
 ## To do
 
-- [ ] Implement checkm2
+- [ ] Calculate checkm2 runtime based on the number of genomes
+- [ ] Clean up rules
 - [ ] Reports
 
