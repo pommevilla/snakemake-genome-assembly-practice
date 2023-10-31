@@ -29,6 +29,11 @@ Practicing using Snakemake to:
 ## To do
 
 - [ ] Calculate checkm2 runtime based on the number of genomes
-- [ ] Clean up rules
 - [ ] Reports
-
+    - [ ] Spades runtime reports
+    - [ ] Metric plots
+        - See here for parameterizing R scripts with Snakemake: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#r-and-r-markdown
+- [ ] Clean up names in checkm2 and quast metric outputs
+- [ ] Modify running time for CheckM2, overall workflow based on number of inputs
+    - https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#resources
+- [ ] Reorganize working directory (separate config value)
