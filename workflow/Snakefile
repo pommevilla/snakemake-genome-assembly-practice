@@ -1,5 +1,8 @@
 configfile: "config/config.yml"
 include: "rules/common.smk"
+include: "rules/download_sras.smk"
+include: "rules/assembly.smk"
+include: "rules/metrics.smk"
 
 localrules: all, generate_snakemake_dag, clean_all, download_sra, dump_fastqs, fastp_qc, collect_quast_metrics, collect_genomes
 
@@ -17,11 +20,7 @@ rule all:
             final_genome_directory=config['final_genome_directory'],
             sra=SRA_LIST
         ),
-        expand(
-            "{final_metrics_directory}/{sra}/quast_report.txt",
-            final_metrics_directory=config['final_metrics_directory'],
-            sra=SRA_LIST
-        ),
+        f"{config['final_metrics_directory']}/quast_metrics.txt",
         expand(
             "{final_metrics_directory}/checkm2",
             final_metrics_directory=config['final_metrics_directory'],
@@ -29,7 +28,6 @@ rule all:
 
 ####### Meta rules #######
 rule generate_snakemake_dag:
-    input:
     output:
         "results/snakemake_dag.png"
     log:
@@ -54,200 +52,4 @@ rule clean_all:
         rm .snakemake/locks/*
         """
 
-####### Output rules #######
-# Prefetches SRA files
-rule download_sra:
-    output:
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}.sra"
-    log:
-        err="logs/download_sra/{sra}/prefetch.err",
-        out="logs/download_sra/{sra}/prefetch.out"
-    conda:
-        "envs/sra-tools.yml"
-    shell:
-        """
-        prefetch {wildcards.sra} -O {config[sra_download_directory]} 1> {log.out} 2> {log.err}
-        """
 
-# Dumps fastqs from prefetched SRA files
-rule dump_fastqs:
-    input:
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}.sra"
-    output:
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastq.gz",
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.fastq.gz"
-    log:
-        err="logs/dump_fastqs/{sra}/fastq-dump.err",
-        out="logs/dump_fastqs/{sra}/fastq-dump.out"
-    conda:
-        "envs/sra-tools.yml"
-    shell:
-        """
-        fastq-dump --outdir {config[sra_download_directory]}/{wildcards.sra} \
-            --gzip --skip-technical --readids --read-filter pass \
-            --split-3 --clip \
-            {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}.sra 
-        """
-    
-# QC on fastqs using fastp
-rule fastp_qc:
-    input:
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastq.gz",
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.fastq.gz"
-    output:
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastp.fastq.gz",
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.fastp.fastq.gz",
-    log:
-        err="logs/fastp_qc/{sra}/fastp_qc.err",
-        out="logs/fastp_qc/{sra}/fastp_qc.out"
-    conda:
-        "envs/fastp.yml"
-    shell:
-        """
-        fastp -i {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.fastq.gz \
-            -I {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.fastq.gz \
-            -o {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.fastp.fastq.gz \
-            -O {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.fastp.fastq.gz \
-            --failed_out {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_failed_reads.txt \
-            -h {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_fastp_report.html \
-            -j {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_fastp_report.json \
-        """
-
-
-# Remove phiX spikein
-rule phix_removal:
-    input:
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.fastp.fastq.gz",
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.fastp.fastq.gz",
-    output:
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.unmatched.fastp.fastq.gz",
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.unmatched.fastp.fastq.gz",
-    log:
-        err="logs/phix_removal/{sra}/phix_removal.err",
-        out="logs/phix_removal/{sra}/phix_removal.out"
-    conda:
-        "envs/bbduk.yml"
-    resources:
-        time="1h",
-        partition="short",
-    shell:
-        """
-        bbduk.sh in={config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.fastp.fastq.gz \
-            in2={config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.fastp.fastq.gz \
-            out={config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.unmatched.fastp.fastq.gz \
-            out2={config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.unmatched.fastp.fastq.gz \
-            stats={config[sra_download_directory]}/{wildcards.sra}/bbduk_stats.txt \
-            hdist=1
-        """
-
-
-# Submit a job to slurm to run spades to assemble genome
-rule spades_py:
-    input:
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_1.unmatched.fastp.fastq.gz",
-        f"{config['sra_download_directory']}/{{sra}}/{{sra}}_pass_2.unmatched.fastp.fastq.gz",
-    output:
-        f"{config['sra_download_directory']}/{{sra}}/spades_output/scaffolds.fasta",
-    log:
-        err="logs/spades_py/{sra}/spades_py.err",
-        out="logs/spades_py/{sra}/spades_py.out"
-    conda:
-        "envs/spades.yml"
-    threads: 32
-    resources:
-        time="12h",
-        mem_mb="64G"
-    benchmark:
-        "benchmarks/spades_py/{sra}.txt"
-    shell:
-        """
-        spades.py --threads {threads} \
-            -1 {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_1.unmatched.fastp.fastq.gz \
-            -2 {config[sra_download_directory]}/{wildcards.sra}/{wildcards.sra}_pass_2.unmatched.fastp.fastq.gz \
-            -o {config[sra_download_directory]}/{wildcards.sra}/spades_output 
-        """
-
-####### Metrics #######
-rule quast:
-    input:
-        f"{config['sra_download_directory']}/{{sra}}/spades_output/scaffolds.fasta",
-    output:
-        f"{config['sra_download_directory']}/{{sra}}/quast_output/report.txt",
-    log:
-        err="logs/quast/{sra}/quast.err",
-        out="logs/quast/{sra}/quast.out"
-    conda:
-        "envs/metrics.yml"
-    resources:
-        time="2h",
-        partition="short",
-    shell:
-        """
-        quast.py {input} -o \
-            {config[sra_download_directory]}/{wildcards.sra}/quast_output 
-        """
-
-rule checkm2:
-    input:
-        expand(
-            "{final_genome_directory}/{sra}_scaffolds.fasta",
-            final_genome_directory=config['final_genome_directory'],
-            sra=SRA_LIST
-        ),
-    output:
-        # f"{config['sra_download_directory']}/{{sra}}/checkm2"
-        directory("{final_metrics_directory}/checkm2")
-    # log:
-    #     err="logs/checkm2/checkm2.err",
-    #     out="logs/checkm2/checkm2.out"
-    conda:
-        "envs/checkm2.yml"
-    params:
-        checkm2_database=config["checkm2_database"],
-        final_genome_directory=config["final_genome_directory"],
-        final_metrics_directory=config["final_metrics_directory"]
-    resources:
-        time="2h",
-        partition="short",
-        mem_mb=64000
-    threads: 64
-    shell:
-        """
-        checkm2 predict -t {threads} \
-            --input {input} \
-            --allmodels \
-            --output-directory {params.final_metrics_directory}/checkm2 \
-            --database_path {params.checkm2_database} \
-            --force
-        """
-
-
-    
-####### Moving files to final directories #######
-# Collect metric files into one directory
-rule collect_quast_metrics:
-    input:
-        quast_metrics=f"{config['sra_download_directory']}/{{sra}}/quast_output/report.txt",
-    output:
-        f"{config['final_metrics_directory']}/{{sra}}/quast_report.txt",
-    log:
-        err="logs/collect_metrics/{sra}/collect_metrics.err",
-        out="logs/collect_metrics/{sra}/collect_metrics.out"
-    shell:
-        """
-        cp {input.quast_metrics} {config[final_metrics_directory]}/{wildcards.sra}/quast_report.txt 1> {log.out} 2> {log.err}
-        """
-
-# Move genomes to final directory
-rule collect_genomes:
-    input:
-        f"{config['sra_download_directory']}/{{sra}}/spades_output/scaffolds.fasta",
-    output:
-        f"{config['final_genome_directory']}/{{sra}}_scaffolds.fasta",
-    log:
-        err="logs/collect_genomes/{sra}/collect_genomes.err",
-        out="logs/collect_genomes/{sra}/collect_genomes.out"
-    shell:
-        """
-        cp {input} {config[final_genome_directory]}/{wildcards.sra}_scaffolds.fasta 1> {log.out} 2> {log.err}
-        """
