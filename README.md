@@ -13,6 +13,7 @@ Practicing using Snakemake to:
 * Install `snakemake`. A bare conda/mamba environment is recommended (ie., created with `mamba create -c conda-forge -c bioconda -n snakemake snakemake`)
 * Edit `config/config.yml`. 
     * `sra_list` should be the path to a newline-separated file of SRA accessions.
+    * Enter the path to the checkm2 database on your system. If you don't have it installed, you can download it directly from [here](https://zenodo.org/api/files/fd3bc532-cd84-4907-b078-2e05a1e46803/checkm2_database.tar.gz) ([source](https://github.com/chklovski/CheckM2/issues/74)) and put enter the path into the config file.
     * By default, the pipeline will put everything into the `output` folder - change the path if you'd like it to be put somewhere else
 * Edit `slurm/config.yaml`.
     * In particular, you'll need to edit the `default-resources` entry with the default partition you'd like to use to submit slurm jobs to.
@@ -37,3 +38,5 @@ Practicing using Snakemake to:
 - [ ] Modify running time for CheckM2, overall workflow based on number of inputs
     - https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#resources
 - [ ] Reorganize working directory (separate config value)
+- [ ] Switch to Unicycler
+    - [ ] Add minimum contig length
