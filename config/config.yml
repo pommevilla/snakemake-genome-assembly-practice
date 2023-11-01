@@ -22,3 +22,9 @@ sra_list: data/sras.txt
 # Short SRA lists for testing
 # sra_list: data/sras_short.txt
 # sra_list: data/even_shorter.txt
+
+########### Program parameters ############
+assembly:
+
+  # Minimm contig length for SPAdes assembly
+  minimum_contig_length: 200
