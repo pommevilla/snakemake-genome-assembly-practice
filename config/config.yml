@@ -1,26 +1,30 @@
-# Where to download the SRA files 
-# sra_download_directory: /90daydata/fsepru/paul.villanueva/sra_scratch
-sra_download_directory: output
+directories:
+  # The directory where all of the intermediate files will be stored
+  # (sra prefetch files, fastq dumps, assembly files, etc.)
+  # sra_download_directory: /90daydata/fsepru/paul.villanueva/sra_scratch
+  # sra_download_directory: output
+  working_directory: working
 
-# Where to store assembled genomes
-# final_genome_directory: /90daydata/fsepru/paul.villanueva/practice_genomes
-final_genome_directory: output/genomes
+  # Where to store final metrics and genomes
+  final_output_directory: output
+  # final_metrics_directory: /90daydata/fsepru/paul.villanueva/practice_genomes/metrics
+  final_genome_directory: output/genomes
+  final_metrics_directory: output/metrics
+  plots_directory: output/plots
 
-# Where to store final metrics
-# final_metrics_directory: /90daydata/fsepru/paul.villanueva/practice_genomes/metrics
-final_metrics_directory: output/metrics
-
-# Path to the checkM2 database. Should point to the .dmnd file.
-checkm2_database: /project/fsepru/paul.villanueva/databases/CheckM2_database/uniref100.KO.1.dmnd
+  # Path to the checkM2 database. Should point to the .dmnd file.
 
 
-########### Input files ############
+########### Inputs ############
 # sra_list is a newline-separated file containing SRA accessions
 # It's assumed that these are paired-end reads.
 sra_list: data/sras.txt
 
-# Short SRA lists for testing
-# sra_list: data/sras_short.txt
+##### Short SRA lists for testing ######
+# This list has 10 SRAs
+# sra_list: data/sras_short.txt÷\
+
+# This list has two SRAs
 # sra_list: data/even_shorter.txt
 
 ########### Program parameters ############
@@ -28,3 +32,8 @@ assembly:
 
   # Minimm contig length for SPAdes assembly
   minimum_contig_length: 200
+
+metrics:
+
+  # Location of the checkm2 diamond database. It should end in .dmnd. 
+  checkm2_database: /project/fsepru/paul.villanueva/databases/CheckM2_database/uniref100.KO.1.dmnd
