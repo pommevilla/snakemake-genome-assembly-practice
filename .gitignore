@@ -47,10 +47,11 @@ Rplots.pdf
 logs/
 benchmarks
 
-# Snakemake status outputs
-output/*
+# Snakemake output and working directories
+output
+working
 
-# Scratch directory for practice
+# Scratch directory for prototyping
 scratch
 
 # Intermediate directories 
