@@ -12,25 +12,23 @@ rule all:
         # Workflow diagram
         "snakemake_dag.png",
 
-        # Assembled genomes
-        # expand(
-        #     "{spades_output_dir}/{sra}/spades_output/scaffolds.fasta", 
-        #     spades_output_dir=config["directories"]['working_directory'],
-        #     sra=SRA_LIST
-        # ),
+        # Assembled genomes in the working directory
         expand(
             "{unicycler_output_directory}/{sra}/unicycler_output/assembly.fasta", 
             unicycler_output_directory=config["directories"]['working_directory'],
             sra=SRA_LIST
         ),
+
         # Assembled genomes in the final directory
         expand(
             "{final_genome_directory}/{sra}_assembly.fasta",
             final_genome_directory=config["directories"]['final_genome_directory'],
             sra=SRA_LIST
         ),
+
         # Quast metrics
         f"{config['directories']['final_metrics_directory']}/quast_metrics.txt",
+
         # CheckM metrics
         expand(
             "{final_metrics_directory}/checkm2",
