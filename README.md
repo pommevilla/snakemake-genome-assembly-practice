@@ -33,7 +33,8 @@ Practicing using Snakemake to:
     - [ ] Spades runtime reports
     - [ ] Metric plots
         - See here for parameterizing R scripts with Snakemake: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#r-and-r-markdown
-- [ ] Clean up names in checkm2 and quast metric outputs
-- [ ] 
+- [ ] Clean up names in checkm2 report
 - [ ] Modify running time for CheckM2, overall workflow based on number of inputs
     - https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#resources
+- [ ] Add a rule to download the checkm2 database if it doesn't exist
+- [ ] Allow user to supply paired-end reads
