@@ -1,11 +1,11 @@
-# Snakemake genome assembly practice
+# Snakemake genome assembly 
 
-Practicing using Snakemake to:
+This is a Snakemake pipeline that downloads reads from SRA, assembles them using Unicycler, and outputs various quality metric files and plots. The steps in the pipeline are:
 * Download unassembled genomes from SRA using [SRA toolkit](https://github.com/ncbi/sra-tools/wiki)
 * Quality control with [FASTP](https://github.com/OpenGene/fastp)
 * phiX spikein removal with [bbduk](https://jgi.doe.gov/data-and-tools/software-tools/bbtools/bb-tools-user-guide/bbduk-guide/)
-* Assembled genomes with [SPAdes](https://github.com/ablab/spades#sec3.1)
-* Get genome assembly metrics with [CheckM2](https://github.com/chklovski/CheckM2)
+* Assemble genomes with [Unicycler](https://github.com/rrwick/Unicycler)
+* Get genome assembly metrics with [CheckM2](https://github.com/chklovski/CheckM2) and [Quast](https://github.com/ablab/quast)
 
 ## Running the pipeline
 
