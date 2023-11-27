@@ -55,7 +55,9 @@ rule phix_removal:
             out={params.working_directory}/{wildcards.sra}/{wildcards.sra}_pass_1.unmatched.fastp.fastq.gz \
             out2={params.working_directory}/{wildcards.sra}/{wildcards.sra}_pass_2.unmatched.fastp.fastq.gz \
             stats={params.working_directory}/{wildcards.sra}/bbduk_stats.txt \
-            hdist=1
+            overwrite=t \
+            hdist=1 \
+            1> {log.out} 2> {log.err}
         """
 
 rule unicycler:
